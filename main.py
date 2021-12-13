@@ -42,25 +42,25 @@ def solve1(p, q, f, alpha, beta, gamma, x0, xend, h):
 
     a = np.zeros(len(xrange))
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        a[i] = 1/(h**2) - p(x)/(2*h)
-    a[-1] = - beta[1] / h
+        a[i] = 1 - ((p(x) * h) / 2)
+    a[-1] = - beta[1] * h
 
     b = np.zeros(len(xrange))
-    b[0] = alpha[0] - beta[0] / h
+    b[0] = alpha[0] * (h**2) - beta[0] * h
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        b[i] = -2/(h**2) + q(x)
-    b[-1] = alpha[1] + beta[1] / h
+        b[i] = -2 + q(x) * (h**2)
+    b[-1] = alpha[1] * (h**2) + beta[1] * h
 
     c = np.zeros(len(xrange))
-    c[0] = beta[0] / h
+    c[0] = beta[0] * h
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        c[i] = 1/(h**2) + p(x)/(2*h)
+        c[i] = 1 + ((p(x) * h) / 2)
 
     f_array = np.zeros(len(xrange))
-    f_array[0] = gamma[0]
-    f_array[-1] = gamma[1]
+    f_array[0] = gamma[0] * (h**2)
+    f_array[-1] = gamma[1] * (h**2)
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        f_array[i] = f(x)
+        f_array[i] = f(x) * (h**2)
 
     return solve3diagonal(a, b, c, f_array)
 
@@ -76,19 +76,19 @@ def solve2(p, q, f, alpha, beta, gamma, x0, xend, h):
     b = np.zeros(len(xrange))
     b[0] = q(x0) * h**2 - 2 + (2 * h * alpha[0]) / beta[0] - (alpha[0] * p(x0) * h**2) / beta[0]
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        b[i] = -2 + q(x) * h**2
+        b[i] = -2 + q(x) * (h**2)
     b[-1] = q(xend) * h**2 - 2 - (2 * h * alpha[1]) / beta[1] - (alpha[1] * p(xend) * h**2) / beta[1]
 
     c = np.zeros(len(xrange))
     c[0] = 2
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        c[i] = 1 + (p(x) * h / 2)
+        c[i] = 1 + ((p(x) * h) / 2)
 
     f_array = np.zeros(len(xrange))
     f_array[0] = f(x0) * h**2 + (2 * h * gamma[0]) / beta[0] - (p(x0) * gamma[0] * h**2) / beta[0]
     f_array[-1] = f(xend) * h**2 - (2 * h * gamma[1]) / beta[1] - (p(xend) * gamma[1] * h**2) / beta[1]
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        f_array[i] = f(x) * h**2
+        f_array[i] = f(x) * (h**2)
 
     return solve3diagonal(a, b, c, f_array)
 
@@ -112,7 +112,7 @@ def solve3diagonal(a, b, c, f):
     return y
 
 
-def solve3diagonalThompson(a, b, c, f):
+def solve3diagonal_thompson(a, b, c, f):
     # assuming that len(a) == len(b) == len(c) == len(f) == n + 1
     C = np.zeros(len(f))
     F = np.zeros(len(f))
@@ -144,6 +144,7 @@ def main1():
     h = 0.01
     xrange = np.arange(x0, xend, h)
 
+    y = solve1(p, q, f, alpha, beta, gamma, x0, xend, h)
     y = solve2(p, q, f, alpha, beta, gamma, x0, xend, h)
 
     number_of_methods = 1
