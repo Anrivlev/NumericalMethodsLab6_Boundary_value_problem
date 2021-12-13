@@ -70,25 +70,25 @@ def solve2(p, q, f, alpha, beta, gamma, x0, xend, h):
 
     a = np.zeros(len(xrange))
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        a[i] = 1 / (h ** 2) - p(x) / (2 * h)
+        a[i] = 1 - ((p(x) * h) / 2)
     a[-1] = 2
 
     b = np.zeros(len(xrange))
     b[0] = q(x0) * h**2 - 2 + (2 * h * alpha[0]) / beta[0] - (alpha[0] * p(x0) * h**2) / beta[0]
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        b[i] = -2 / (h ** 2) + q(x)
+        b[i] = -2 + q(x) * h**2
     b[-1] = q(xend) * h**2 - 2 - (2 * h * alpha[1]) / beta[1] - (alpha[1] * p(xend) * h**2) / beta[1]
 
     c = np.zeros(len(xrange))
     c[0] = 2
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        c[i] = 1 / (h ** 2) + p(x) / (2 * h)
+        c[i] = 1 + (p(x) * h / 2)
 
     f_array = np.zeros(len(xrange))
     f_array[0] = f(x0) * h**2 + (2 * h * gamma[0]) / beta[0] - (p(x0) * gamma[0] * h**2) / beta[0]
     f_array[-1] = f(xend) * h**2 - (2 * h * gamma[1]) / beta[1] - (p(xend) * gamma[1] * h**2) / beta[1]
     for i, x in zip(range(1, len(xrange) - 1), xrange[1:-1]):
-        f_array[i] = f(x)
+        f_array[i] = f(x) * h**2
 
     return solve3diagonal(a, b, c, f_array)
 
@@ -112,20 +112,36 @@ def solve3diagonal(a, b, c, f):
     return y
 
 
+def solve3diagonalThompson(a, b, c, f):
+    # assuming that len(a) == len(b) == len(c) == len(f) == n + 1
+    C = np.zeros(len(f))
+    F = np.zeros(len(f))
+    C[0] = c[0] / b[0]
+    for i in range(1, len(f) - 1):
+        C[i] = c[i] / (b[i] - a[i] * C[i - 1])
+    F[0] = f[0] / b[0]
+    for i in range(1, len(f)):
+        F[i] = (f[i] - a[i] * F[i - 1]) / (b[i] - a[i] * C[i - 1])
+    y = np.zeros(len(f))
+    y[-1] = F[-1]
+    for i in range(len(f) - 2, -1, -1):
+        y[i] = F[i] - C[i] * y[i + 1]
+    return y
+
 def main1():
     x0 = 0
     xend = 1
 
     alpha = np.array([[0], [6]])
     beta = np.array([[1], [1]])
-    gamma = np.array([[0], [8.3761]])
+    gamma = np.array([[0], [8.3761043995962756169530107919075058250981216852045948197363873469]])
 
     # u'(0) = 0
     # 6u(1) + u'(1) = 8.3761
 
     sol = solution
 
-    h = 0.001
+    h = 0.01
     xrange = np.arange(x0, xend, h)
 
     y = solve2(p, q, f, alpha, beta, gamma, x0, xend, h)
@@ -149,9 +165,7 @@ def main2():
 
     alpha = np.array([[0], [6]])
     beta = np.array([[1], [1]])
-    gamma = np.array([[0], [8.3761]])
-
-    sol = solution
+    gamma = np.array([[0], [8.3761043995962756169530107919075058250981216852045948197363873469]])
 
     hmin = 0.0001
     hmax = 0.1
@@ -163,9 +177,9 @@ def main2():
     error[solve2] = np.zeros(len(hrange))
 
     for i, h in zip(range(len(hrange)), hrange):
+        sol = solution(np.arange(x0, xend, h))
         for key in error:
-            xrange = np.arange(x0, xend, h)
-            error[key][i] = np.max(np.abs(key(p, q, f, alpha, beta, gamma, x0, xend, h) - sol(xrange)))
+            error[key][i] = np.max(np.abs(key(p, q, f, alpha, beta, gamma, x0, xend, h) - sol))
 
     hrange = np.log10(hrange)
     for key in error:
