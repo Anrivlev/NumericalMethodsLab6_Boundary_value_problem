@@ -148,7 +148,7 @@ def main3():
     h_max = 0.1
     h_min = 0.001
 
-    num_step = 50
+    num_step = 1
     num_min = int((right_border - left_border) / h_max)
     num_max = int((right_border - left_border) / h_min)
 
@@ -157,8 +157,8 @@ def main3():
     diff_app_1_err = []
     diff_app_2_err = []
 
-    p = np.cosh
-    q = np.sinh
+    p = lambda x: np.cosh(x)
+    q = lambda x: np.sinh(x)
     f = lambda x: np.cosh(x) + x * np.sinh(x)
     sol = lambda x: np.exp(-np.sinh(x)) + x
 
