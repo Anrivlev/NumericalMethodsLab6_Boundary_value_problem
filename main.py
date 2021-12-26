@@ -29,18 +29,26 @@ def solve1(p, q, f, alpha, beta, gamma, x0, xend, n):
     b = np.zeros(len(x))
     c = np.zeros(len(x))
     f_ar = np.zeros(len(x))
-
-    a[-1] = -beta[1] / h
-    a[0] = 0
-
-    b[0] = alpha[0] - beta[0] / h
-    b[-1] = alpha[1] + beta[1] / h
-
-    c[0] = beta[0] / h
-    c[-1] = 0
-
-    f_ar[0] = gamma[0]
-    f_ar[-1] = gamma[1]
+    if beta[0] != 0:
+        a[0] = 0
+        b[0] = alpha[0] - beta[0] / h
+        c[0] = beta[0] / h
+        f_ar[0] = gamma[0]
+    else:
+        c[0] = 0
+        b[0] = alpha[0]
+        a[0] = 0
+        f_ar[0] = gamma[0]
+    if beta[1] != 0:
+        a[-1] = -beta[1] / h
+        b[-1] = alpha[1] + beta[1] / h
+        c[-1] = 0
+        f_ar[-1] = gamma[1]
+    else:
+        c[-1] = 0
+        b[-1] = alpha[1]
+        a[-1] = 0
+        f_ar[-1] = gamma[1]
 
     for i in range(1, len(x) - 1):
         a[i] = 1 / (h ** 2) - p(x[i]) / (2 * h)
@@ -72,15 +80,26 @@ def solve2(p, q, f, alpha, beta, gamma, x0, xend, n):
     for i in range(1, len(x) - 1):
         f_ar[i] = f(x[i])
 
-    a[-1] = 2
-    b[-1] = -2 - ((2 * h * alpha[1]) / beta[1]) - ((p(x[-1]) * (h**2) * alpha[1]) / beta[1]) + (q(x[-1]) * (h**2))
-    c[-1] = 0
-    f_ar[-1] = f(x[-1]) * (h**2) - (((h**2) * p(x[-1]) * gamma[1]) / beta[1]) - ((2 * h * gamma[1])/beta[1])
-
-    c[0] = 2
-    b[0] = -2 + ((2 * alpha[0] * h) / beta[0]) - ((p(x[0]) * alpha[0] * (h ** 2)) / (beta[0])) + q(x[0]) * (h ** 2)
-    a[0] = 0
-    f_ar[0] = f(x[0]) * (h ** 2) + ((gamma[0] * 2 * h) / beta[0]) - ((p(x[0]) * gamma[0] * (h ** 2)) / beta[0])
+    if beta[1] != 0:
+        a[-1] = 2
+        b[-1] = -2 - ((2 * h * alpha[1]) / beta[1]) - ((p(x[-1]) * (h**2) * alpha[1]) / beta[1]) + (q(x[-1]) * (h**2))
+        c[-1] = 0
+        f_ar[-1] = f(x[-1]) * (h**2) - (((h**2) * p(x[-1]) * gamma[1]) / beta[1]) - ((2 * h * gamma[1])/beta[1])
+    else:
+        c[-1] = 0
+        b[-1] = alpha[1]
+        a[-1] = 0
+        f_ar[-1] = gamma[1]
+    if beta[0] != 0:
+        c[0] = 2
+        b[0] = -2 + ((2 * alpha[0] * h) / beta[0]) - ((p(x[0]) * alpha[0] * (h ** 2)) / (beta[0])) + q(x[0]) * (h ** 2)
+        a[0] = 0
+        f_ar[0] = f(x[0]) * (h ** 2) + ((gamma[0] * 2 * h) / beta[0]) - ((p(x[0]) * gamma[0] * (h ** 2)) / beta[0])
+    else:
+        c[0] = 0
+        b[0] = alpha[0]
+        a[0] = 0
+        f_ar[0] = gamma[0]
 
     return solve3diagonal(a, b, c, f_ar)
 
@@ -126,11 +145,12 @@ def main3():
     left_border = 0
     right_border = 1
 
-    step_max = 0.1
-    step_min = 0.0001
-    # step = 0.0001
+    h_max = 0.1
+    h_min = 0.001
 
-    num = 10
+    num_step = 50
+    num_min = int((right_border - left_border) / h_max)
+    num_max = int((right_border - left_border) / h_min)
 
     x_step = []
 
@@ -140,14 +160,15 @@ def main3():
     p = np.cosh
     q = np.sinh
     f = lambda x: np.cosh(x) + x * np.sinh(x)
+    sol = lambda x: np.exp(-np.sinh(x)) + x
+
     alpha = np.array([0, 6])
     beta = np.array([1, 1])
     gamma = np.array([0, 8.3761043995962756169530107919075058250981216852045948197363873469])
 
-    sol = lambda x: np.exp(-np.sinh(x)) + x
 
-    while num < 1000:
-
+    num = num_min
+    while num < num_max:
         right = [sol(i) for i in np.linspace(left_border, right_border, num + 1)]
         diff_app_1 = solve1(p, q, f, alpha, beta, gamma, left_border, right_border, num)
         diff_app_2 = solve2(p, q, f, alpha, beta, gamma, left_border, right_border, num)
@@ -164,7 +185,7 @@ def main3():
         x_step.append(np.log10(step))
         diff_app_1_err.append(np.log10(a1))
         diff_app_2_err.append(np.log10(a2))
-        num = num + 5
+        num += num_step
 
     plt.suptitle('Зависимость логарифма абсолютной погрешности от логарифма шага интегрирования')
     plt.subplot(1, 2, 1)
