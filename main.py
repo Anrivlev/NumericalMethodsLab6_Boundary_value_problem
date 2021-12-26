@@ -21,54 +21,68 @@ def least_squares(x, y):
     return a, b
 
 
-def solve1(p, q, f, alpha, beta, gamma, x0, xend, h):
-    xrange = np.linspace(x0, xend, int(((xend - x0) // h) + 1))
+def solve1(p, q, f, alpha, beta, gamma, x0, xend, n):
+    x = np.linspace(x0, xend, n + 1)
+    h = (xend - x0) / n
 
-    a = np.zeros(len(xrange))
-    b = np.zeros(len(xrange))
-    c = np.zeros(len(xrange))
-    p_array = np.vectorize(p)(xrange)
-    q_array = np.vectorize(q)(xrange)
-    f_array = np.vectorize(f)(xrange)
+    a = np.zeros(len(x))
+    b = np.zeros(len(x))
+    c = np.zeros(len(x))
+    f_ar = np.zeros(len(x))
 
-    b[0] = alpha[0] * (h ** 2) - beta[0] * h
-    c[0] = beta[0] * h
-    f_array[0] = gamma[0] * (h ** 2)
+    a[-1] = -beta[1] / h
+    a[0] = 0
 
-    a[1:-1] = 1 - ((p_array[1:-1] * h) / 2)
-    b[1:-1] = -2 + q_array[1:-1] * (h ** 2)
-    c[1:-1] = 1 + ((p_array[1:-1] * h) / 2)
-    f_array[1:-1] = f_array[1:-1] * (h ** 2)
+    b[0] = alpha[0] - beta[0] / h
+    b[-1] = alpha[1] + beta[1] / h
 
-    a[-1] = - beta[1] * h
-    b[-1] = alpha[1] * (h**2) + beta[1] * h
-    f_array[-1] = gamma[1] * (h**2)
+    c[0] = beta[0] / h
+    c[-1] = 0
 
-    return solve3diagonal(a, b, c, f_array)
+    f_ar[0] = gamma[0]
+    f_ar[-1] = gamma[1]
+
+    for i in range(1, len(x) - 1):
+        a[i] = 1 / (h ** 2) - p(x[i]) / (2 * h)
+    for i in range(1, len(x) - 1):
+        b[i] = -2 / (h ** 2) + q(x[i])
+    for i in range(1, len(x) - 1):
+        c[i] = 1 / (h ** 2) + p(x[i]) / (2 * h)
+    for i in range(1, len(x) - 1):
+        f_ar[i] = f(x[i])
+
+    return solve3diagonal(a, b, c, f_ar)
 
 
-def solve2(p, q, f, alpha, beta, gamma, x0, xend, h):
-    xrange = np.linspace(x0, xend,  int(((xend - x0) // h) + 1))
+def solve2(p, q, f, alpha, beta, gamma, x0, xend, n):
+    x = np.linspace(x0, xend, n + 1)
+    h = (xend - x0) / n
 
-    a = np.zeros(len(xrange))
-    b = np.zeros(len(xrange))
-    c = np.zeros(len(xrange))
-    f_array = np.zeros(len(xrange))
+    a = np.zeros(len(x))
+    b = np.zeros(len(x))
+    c = np.zeros(len(x))
+    f_ar = np.zeros(len(x))
 
-    b[0] = q(x0) * h ** 2 - 2 + (2 * h * alpha[0]) / beta[0] - (alpha[0] * p(x0) * h ** 2) / beta[0]
-    c[0] = 2
-    f_array[0] = f(x0) * h ** 2 + (2 * h * gamma[0]) / beta[0] - (p(x0) * gamma[0] * h ** 2) / beta[0]
-
-    a[1:-1] = 1 - ((p(xrange[1:-1]) * h) / 2)
-    b[1:-1] = -2 + q(xrange[1:-1]) * (h ** 2)
-    c[1:-1] = 1 + ((p(xrange[1:-1]) * h) / 2)
-    f_array[1:-1] = f(xrange[1:-1]) * (h ** 2)
+    for i in range(1, len(x) - 1):
+        a[i] = 1 / (h ** 2) - p(x[i]) / (2 * h)
+    for i in range(1, len(x) - 1):
+        b[i] = -2 / (h ** 2) + q(x[i])
+    for i in range(1, len(x) - 1):
+        c[i] = 1 / (h ** 2) + p(x[i]) / (2 * h)
+    for i in range(1, len(x) - 1):
+        f_ar[i] = f(x[i])
 
     a[-1] = 2
-    b[-1] = q(xend) * h**2 - 2 - (2 * h * alpha[1]) / beta[1] - (alpha[1] * p(xend) * h**2) / beta[1]
-    f_array[-1] = f(xend) * h**2 - (2 * h * gamma[1]) / beta[1] - (p(xend) * gamma[1] * h**2) / beta[1]
+    b[-1] = -2 - ((2 * h * alpha[1]) / beta[1]) - ((p(x[-1]) * (h**2) * alpha[1]) / beta[1]) + (q(x[-1]) * (h**2))
+    c[-1] = 0
+    f_ar[-1] = f(x[-1]) * (h**2) - (((h**2) * p(x[-1]) * gamma[1]) / beta[1]) - ((2 * h * gamma[1])/beta[1])
 
-    return solve3diagonal(a, b, c, f_array)
+    c[0] = 2
+    b[0] = -2 + ((2 * alpha[0] * h) / beta[0]) - ((p(x[0]) * alpha[0] * (h ** 2)) / (beta[0])) + q(x[0]) * (h ** 2)
+    a[0] = 0
+    f_ar[0] = f(x[0]) * (h ** 2) + ((gamma[0] * 2 * h) / beta[0]) - ((p(x[0]) * gamma[0] * (h ** 2)) / beta[0])
+
+    return solve3diagonal(a, b, c, f_ar)
 
 
 def solve3diagonal(a, b, c, f):
@@ -105,6 +119,75 @@ def solve3diagonal_thompson(a, b, c, f):
     for i in range(len(f) - 2, -1, -1):
         y[i] = F[i] - C[i] * y[i + 1]
     return y
+
+
+def main3():
+
+    left_border = 0
+    right_border = 1
+
+    step_max = 0.1
+    step_min = 0.0001
+    # step = 0.0001
+
+    num = 10
+
+    x_step = []
+
+    diff_app_1_err = []
+    diff_app_2_err = []
+
+    p = np.cosh
+    q = np.sinh
+    f = lambda x: np.cosh(x) + x * np.sinh(x)
+    alpha = np.array([0, 6])
+    beta = np.array([1, 1])
+    gamma = np.array([0, 8.3761043995962756169530107919075058250981216852045948197363873469])
+
+    sol = lambda x: np.exp(-np.sinh(x)) + x
+
+    while num < 1000:
+
+        right = [sol(i) for i in np.linspace(left_border, right_border, num + 1)]
+        diff_app_1 = solve1(p, q, f, alpha, beta, gamma, left_border, right_border, num)
+        diff_app_2 = solve2(p, q, f, alpha, beta, gamma, left_border, right_border, num)
+
+        a1 = 0
+        a2 = 0
+        for i in range(len(right)):
+            if a1 < abs(diff_app_1[i] - right[i]):
+                a1 = abs(diff_app_1[i] - right[i])
+            if a2 < abs(diff_app_2[i] - right[i]):
+                a2 = abs(diff_app_2[i] - right[i])
+
+        step = (right_border - left_border) / num
+        x_step.append(np.log10(step))
+        diff_app_1_err.append(np.log10(a1))
+        diff_app_2_err.append(np.log10(a2))
+        num = num + 5
+
+    plt.suptitle('Зависимость логарифма абсолютной погрешности от логарифма шага интегрирования')
+    plt.subplot(1, 2, 1)
+    plt.title("Метод 1 порядка")
+    plt.xlabel("log(h)")
+    plt.ylabel("log(max(|Δu|))")
+    plt.grid()
+    plt.plot(x_step, diff_app_1_err, color='k')
+
+    plt.suptitle('Зависимость логарифма абсолютной погрешности от логарифма шага интегрирования')
+    plt.subplot(1, 2, 2)
+    plt.title("Метод 2 порядка")
+    plt.xlabel("log(h)")
+    plt.ylabel("log(max(|Δu|))")
+    plt.grid()
+    plt.plot(x_step, diff_app_2_err, color='k')
+
+    coeffs1 = least_squares(np.array(x_step), np.array(diff_app_1_err))
+    print(solve1.__name__, ": ", coeffs1[0], " + ", coeffs1[1], "x", sep="")
+    coeffs2 = least_squares(np.array(x_step), np.array(diff_app_2_err))
+    print(solve2.__name__, ": ", coeffs2[0], " + ", coeffs2[1], "x", sep="")
+
+    plt.show()
 
 
 def main1():
@@ -190,4 +273,4 @@ def main2():
 
 
 if __name__ == '__main__':
-    main2()
+    main3()
