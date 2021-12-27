@@ -147,8 +147,9 @@ def main3():
 
     h_max = 0.1
     h_min = 0.001
+    h_step = 0.001
 
-    num_step = 1
+    num_step = int((h_max - h_min) / h_step)
     num_min = int((right_border - left_border) / h_max)
     num_max = int((right_border - left_border) / h_min)
 
@@ -227,21 +228,24 @@ def main1():
     f = lambda x: np.cosh(x) + x * np.sinh(x)
     solution = lambda x: np.exp(-np.sinh(x)) + x
 
-    h = 0.01
-    xrange = np.arange(x0, xend, h)
+    h = 0.1
+    n = int((xend - x0) / h)
+    xrange = np.linspace(x0, xend, n + 1)
 
-    # y = solve1(p, q, f, alpha, beta, gamma, x0, xend, h)
-    y = solve2(p, q, f, alpha, beta, gamma, x0, xend, h)
+    y1 = solve1(p, q, f, alpha, beta, gamma, x0, xend, n)
+    y2 = solve2(p, q, f, alpha, beta, gamma, x0, xend, n)
 
     number_of_methods = 1
 
-    plt.subplot(2, number_of_methods, 1)
+    plt.subplot(1, number_of_methods, 1)
     plt.title("")
     plt.xlabel("x")
     plt.ylabel("u(x)")
     plt.grid()
-    plt.plot(xrange, y, color='k', label='Численное значение')
-    plt.plot(xrange, solution(xrange), ls='--', color='k', label='Аналитическое значение')
+    plt.plot(xrange, y1, ls='--', color='k', label='Численное значение 1 порядка')
+    plt.plot(xrange, y2, ls=":", color='k', label='Численное значение 2 порядка')
+    plt.plot(xrange, solution(xrange), color='k', label='Аналитическое значение')
+    plt.legend()
 
     plt.show()
 
